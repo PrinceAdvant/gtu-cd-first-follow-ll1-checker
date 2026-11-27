@@ -1,0 +1,34 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>GTU Compiler Design 3174801 FIRST, FOLLOW and LL(1) table checker</title>
+<meta name="description" content="FIRST and FOLLOW sets are a guaranteed question in Compiler Design, and one wrong set kills the whole LL(1) table. Grammar paste karo (one rule per">
+<style>body{font-family:system-ui,sans-serif;max-width:760px;margin:2rem auto;padding:0 1rem;line-height:1.5}input,textarea,select{margin:.3rem 0;padding:.3rem;width:min(100%,360px);box-sizing:border-box}textarea{width:min(100%,520px);min-height:6rem;font-family:ui-monospace,monospace}#out{font-weight:bold;margin-top:1rem;white-space:pre-wrap;font-family:ui-monospace,monospace;overflow-x:auto}</style></head><body>
+<h1>GTU Compiler Design 3174801 FIRST, FOLLOW and LL(1) table checker</h1>
+<p>FIRST and FOLLOW sets are a guaranteed question in Compiler Design, and one wrong set kills the whole LL(1) table. Grammar paste karo (one rule per line, eps for epsilon), the page prints FIRST and FOLLOW for every non terminal, the parsing table entries and any LL(1) conflict. Use it to check your hand answer. Practice grammars are my own.</p>
+<h2>Tool</h2>
+<label>Grammar (A -> alpha | beta, use eps for epsilon, symbols separated by spaces)<br><textarea id="g">E -> T E'
+E' -> + T E' | eps
+T -> F T'
+T' -> * F T' | eps
+F -> ( E ) | id</textarea></label><br>
+<button type="button" onclick="go()">Show</button>
+<div id="out"></div>
+<h2>Facts used</h2>
+<ul><li>FIRST(X) is the set of terminals that can start a string derived from X. If X can derive epsilon, eps is also in FIRST(X).</li><li>FOLLOW(A) is the set of terminals that can appear right after A in some sentential form. FOLLOW of the start symbol always contains $.</li><li>For A -&gt; alpha B beta: add FIRST(beta) minus eps to FOLLOW(B). If beta can vanish (or is empty), add FOLLOW(A) to FOLLOW(B) as well.</li><li>FOLLOW never contains eps. FIRST can.</li><li>LL(1) table: for each rule A -&gt; alpha put it in M[A, t] for every t in FIRST(alpha), and if alpha can derive eps also for every t in FOLLOW(A). Two rules in one cell means the grammar is not LL(1).</li><li>Default grammar: E -&gt; T E&#x27;, E&#x27; -&gt; + T E&#x27; | eps, T -&gt; F T&#x27;, T&#x27; -&gt; * F T&#x27; | eps, F -&gt; ( E ) | id. FIRST(E) = { (, id } and FOLLOW(E) = { $, ) }.</li></ul>
+<h2>Galti mat karna</h2>
+<ul><li>Do FIRST for all non terminals first, then FOLLOW. FOLLOW needs the FIRST sets of what comes after.</li><li>Write $ in FOLLOW of the start symbol before anything else. Examiners check that line.</li><li>Left recursion (E -&gt; E + T) always breaks LL(1). Remove it first, as in the default grammar.</li><li>A common trap: the dangling else grammar S -&gt; i E t S S&#x27; | a, S&#x27; -&gt; e S | eps has M[S&#x27;, e] with two rules, so it is not LL(1).</li></ul>
+<p>GTU Hero has the Winter 2025 Compiler Design (3174801) paper page: 70 marks and 25 questions extracted. Open it on <a href="https://gtuhero.com/gtu-papers/gujarat-technological-university-3174801-compiler-design-winter-2025">GTUHero</a> (GTU Hero is my project). Source and tests: <a href="https://github.com/PrinceAdvant/gtu-cd-first-follow-ll1-checker">github.com/PrinceAdvant/gtu-cd-first-follow-ll1-checker</a>.</p>
+<script src="calc.js"></script>
+<script>
+function go(){
+  let out;
+  try {
+    const g = F.parse(document.getElementById('g').value), r = F.analyse(g);
+    out = 'Start symbol: ' + g.start + '\n\nFIRST\n' + g.nts.map(n => '  FIRST(' + n + ') = ' + F.fmt(r.first[n])).join('\n') +
+      '\n\nFOLLOW\n' + g.nts.map(n => '  FOLLOW(' + n + ') = ' + F.fmt(r.follow[n])).join('\n') +
+      '\n\nParsing table entries\n' + Object.keys(r.table).map(k => '  M[' + k + '] = ' + r.table[k].join('  AND  ')).join('\n') +
+      '\n\n' + (r.ll1 ? 'LL(1): yes, no cell has two rules.' : 'LL(1): NO\n' + r.conflicts.map(c => '  ' + c).join('\n'));
+  } catch (err) { out = 'Check your input: ' + err.message; }
+  document.getElementById('out').textContent = out;
+}
+go();
+</script>
+</body></html>
